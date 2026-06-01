@@ -1,0 +1,35 @@
+# Environment & Secrets
+.env
+*.env.local
+service-account-key.json
+google-services.json
+
+# Node
+backend/node_modules/
+node_modules/
+
+# Flutter
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/*.iml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Patch scripts (dev-only)
+patch_*.py
+fix_*.py
+clean_*.py
+docs/design.txt
+docs/idea.txt
