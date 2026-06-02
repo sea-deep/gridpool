@@ -8,6 +8,7 @@ import 'package:frontend/widgets/app_surface.dart';
 import 'package:frontend/widgets/page_header.dart';
 import 'package:frontend/widgets/page_scaffold.dart';
 import 'package:frontend/models/ledger_entry.dart';
+import 'package:frontend/widgets/transaction_details_sheet.dart';
 
 class MoneyOutScreen extends ConsumerWidget {
   final Pool pool;
@@ -81,11 +82,24 @@ class MoneyOutScreen extends ConsumerWidget {
                       child: AppSurface(
                         elevation: 0,
                         color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                        padding: const EdgeInsets.all(DesignTokens.spaceLg),
+                        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd, vertical: 12),
+                        onTap: () {
+                          TransactionDetailsSheet.show(
+                            context: context,
+                            title: entry.description ?? 'Expense',
+                            amount: entry.amount,
+                            dateStr: dateStr,
+                            typeLabel: 'Money Out',
+                            creatorName: entry.createdBy,
+                            paymentMethod: entry.paymentMethod?.name,
+                            imageUrl: entry.imageUrl,
+                            isExpense: true,
+                          );
+                        },
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(DesignTokens.spaceMd),
+                              padding: const EdgeInsets.all(DesignTokens.spaceSm),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.errorContainer,
                                 shape: BoxShape.circle,

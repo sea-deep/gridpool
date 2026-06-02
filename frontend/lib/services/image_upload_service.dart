@@ -56,15 +56,15 @@ class ImageUploadService {
 
       final token = await user.getIdToken();
       final uri = Uri.parse('$_baseUrl/upload');
+      final ext = imageFile.path.split('.').last.toLowerCase();
+      final mimeSubtype = const {
+        'jpg': 'jpeg', 'jpeg': 'jpeg', 'png': 'png',
+        'gif': 'gif', 'webp': 'webp', 'heic': 'heic',
+      }[ext] ?? 'jpeg';
+
       final request = http.MultipartRequest('POST', uri)
         ..headers['Authorization'] = 'Bearer $token'
         ..fields['folder'] = folder
-        final ext = imageFile.path.split('.').last.toLowerCase();
-        final mimeSubtype = const {
-          'jpg': 'jpeg', 'jpeg': 'jpeg', 'png': 'png',
-          'gif': 'gif', 'webp': 'webp', 'heic': 'heic',
-        }[ext] ?? 'jpeg';
-
         ..files.add(
           await http.MultipartFile.fromPath(
             'image', 

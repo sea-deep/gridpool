@@ -24,9 +24,20 @@ class ApprovePaymentScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PageHeader(
+          PageHeader(
             title: 'Pending Approvals',
             subtitle: 'Review and approve manual payment submissions from pool members.',
+            actions: [
+              IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                  shape: const CircleBorder(),
+                ),
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
           Expanded(
             child: paymentRequestsAsync.when(

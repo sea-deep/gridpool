@@ -59,32 +59,16 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Animated logo container
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            scheme.primary,
-                            scheme.tertiary,
-                          ],
-                        ),
+                    // App logo
+                    Center(
+                      child: ClipRRect(
                         borderRadius: DesignTokens.radiusXl,
-                        boxShadow: [
-                          BoxShadow(
-                            color: scheme.primary.withValues(alpha: 0.3),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.waves_rounded,
-                        size: 48,
-                        color: scheme.onPrimary,
+                        child: Image.asset(
+                          'assets/icons/logo.png',
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     const SizedBox(height: DesignTokens.spaceLg),

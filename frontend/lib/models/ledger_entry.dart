@@ -91,6 +91,7 @@ class LedgerEntry {
   final PaymentMethod? paymentMethod;
   final String? relatedContributionId;
   final String? relatedExpenseId;
+  final String? imageUrl;
 
   const LedgerEntry({
     required this.id,
@@ -104,6 +105,7 @@ class LedgerEntry {
     this.paymentMethod,
     this.relatedContributionId,
     this.relatedExpenseId,
+    this.imageUrl,
   });
 
   factory LedgerEntry.fromJson(String id, Map<String, dynamic> json) {
@@ -121,6 +123,7 @@ class LedgerEntry {
           : PaymentMethodX.fromValue(json['paymentMethod'] as String),
       relatedContributionId: json['relatedContributionId'] as String?,
       relatedExpenseId: json['relatedExpenseId'] as String?,
+      imageUrl: json['imageUrl'] as String?,
     );
   }
 
@@ -136,6 +139,7 @@ class LedgerEntry {
       'paymentMethod': paymentMethod?.value,
       'relatedContributionId': relatedContributionId,
       'relatedExpenseId': relatedExpenseId,
+      'imageUrl': imageUrl,
     };
   }
 

@@ -84,7 +84,6 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> completeOnboarding({
     required String name,
-    required String? upiId,
     required bool notificationPreference,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
@@ -93,7 +92,6 @@ class AuthController extends Notifier<AuthState> {
         final updatedUser = await _repository.completeOnboarding(
           userId: state.user!.id,
           name: name,
-          upiId: upiId,
           notificationPreference: notificationPreference,
         );
         state = AuthState.authenticated(updatedUser);
@@ -108,7 +106,6 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> updateProfile({
     required String name,
-    required String? upiId,
     required bool notificationPreference,
     String? avatarUrl,
   }) async {
@@ -120,7 +117,6 @@ class AuthController extends Notifier<AuthState> {
     try {
       final updatedUser = await _repository.updateProfile(
         name: name,
-        upiId: upiId,
         notificationPreference: notificationPreference,
         avatarUrl: avatarUrl,
       );
@@ -132,27 +128,6 @@ class AuthController extends Notifier<AuthState> {
       state = previousState.copyWith(error: e.toString());
       if (kDebugMode) {
         debugPrint('AuthController.updateProfile failed: $e');
-      }
-      rethrow;
-    }
-  }
-
-  Future<void> updateUpiId(String upiId) async {
-    final currentUser = state.user;
-    if (currentUser == null) return;
-
-    final previousState = state;
-    state = state.copyWith(status: AuthStatus.loading);
-    try {
-      await _repository.updateUpiId(currentUser.id, upiId);
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        user: currentUser.copyWith(upiId: upiId.trim()),
-      );
-    } catch (e) {
-      state = previousState.copyWith(error: e.toString());
-      if (kDebugMode) {
-        debugPrint('AuthController.updateUpiId failed: $e');
       }
       rethrow;
     }

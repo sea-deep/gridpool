@@ -91,7 +91,6 @@ class AuthRepository {
           name: data['name'] ?? firebaseUser.displayName ?? 'Unknown',
           email: data['email'] ?? firebaseUser.email ?? '',
           avatarUrl: data['avatarUrl'] ?? firebaseUser.photoURL ?? '',
-          upiId: data['upiId'] as String?,
           notificationPreference: data['notificationPreference'] as bool? ?? true,
         );
       } else {
@@ -110,7 +109,7 @@ class AuthRepository {
       name: firebaseUser.displayName ?? 'Unknown User',
       email: firebaseUser.email ?? '',
       avatarUrl: firebaseUser.photoURL ?? '',
-      upiId: null,
+      notificationPreference: true,
     );
   }
 
@@ -170,7 +169,6 @@ class AuthRepository {
   Future<User> completeOnboarding({
     required String userId,
     required String name,
-    required String? upiId,
     required bool notificationPreference,
   }) async {
     if (kDebugMode) {
@@ -191,7 +189,6 @@ class AuthRepository {
         },
         body: jsonEncode({
           'name': name.trim(),
-          'upiId': upiId?.trim().isEmpty ?? true ? null : upiId?.trim(),
           'notificationPreference': notificationPreference,
         }),
       );
@@ -207,7 +204,6 @@ class AuthRepository {
         name: data['name'] ?? name,
         email: data['email'] ?? user.email ?? '',
         avatarUrl: data['avatarUrl'] ?? user.photoURL ?? '',
-        upiId: data['upiId'] as String?,
         notificationPreference: data['notificationPreference'] as bool? ?? true,
       );
     } catch (e) {
@@ -252,6 +248,7 @@ class AuthRepository {
       name: firebaseUser.displayName ?? 'Unknown User',
       email: firebaseUser.email ?? '',
       avatarUrl: firebaseUser.photoURL ?? '',
+      notificationPreference: true,
     );
 
     final response = await _syncUserToBackend(firebaseUser);
@@ -268,47 +265,13 @@ class AuthRepository {
       id: firebaseUser.uid,
       name: data['name'] ?? mappedUser.name,
       email: data['email'] ?? mappedUser.email,
-      avatarUrl: data['avatarUrl'] ?? mappedUser.avatarUrl,
-      upiId: data['upiId'] as String?,
+      avatarUrl: data['avatarUrl'] as String,
       notificationPreference: data['notificationPreference'] as bool? ?? true,
     );
   }
 
-  Future<void> updateUpiId(String userId, String? upiId) async {
-    try {
-      final user = _firebaseAuth.currentUser;
-      if (user == null) {
-        throw Exception('Not authenticated');
-      }
-      final token = await user.getIdToken();
-      final targetUrl = Uri.parse('$_baseUrl/users/profile');
-      final response = await http.post(
-        targetUrl,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'upiId': upiId?.trim().isEmpty ?? true ? null : upiId?.trim(),
-        }),
-      );
-      if (response.statusCode != 200) {
-        throw Exception('Failed to update UPI ID');
-      }
-      if (kDebugMode) {
-        debugPrint('UPI ID updated successfully');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('updateUpiId failed: $e');
-      }
-      rethrow;
-    }
-  }
-
   Future<User> updateProfile({
     required String name,
-    required String? upiId,
     required bool notificationPreference,
     String? avatarUrl,
   }) async {
@@ -320,7 +283,6 @@ class AuthRepository {
 
       final body = <String, dynamic>{
         'name': name.trim(),
-        'upiId': upiId?.trim().isEmpty ?? true ? null : upiId?.trim(),
         'notificationPreference': notificationPreference,
       };
       if (avatarUrl != null && avatarUrl.isNotEmpty) {
@@ -344,7 +306,6 @@ class AuthRepository {
         name: data['name'] ?? name,
         email: data['email'] ?? user.email ?? '',
         avatarUrl: data['avatarUrl'] ?? user.photoURL ?? '',
-        upiId: data['upiId'] as String?,
         notificationPreference: data['notificationPreference'] as bool? ?? true,
       );
     } catch (e) {

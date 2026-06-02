@@ -20,7 +20,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _nameController = TextEditingController();
-  final _upiController = TextEditingController();
   bool _notificationPreference = true;
   bool _isSaving = false;
   bool _isUploadingAvatar = false;
@@ -29,13 +28,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _upiController.dispose();
     super.dispose();
   }
 
   void _initFields(User user) {
     _nameController.text = user.name;
-    _upiController.text = user.upiId ?? '';
     _notificationPreference = user.notificationPreference;
     _lastUserId = user.id;
   }
@@ -72,7 +69,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (url != null && mounted) {
         await ref.read(authControllerProvider.notifier).updateProfile(
               name: _nameController.text.trim(),
-              upiId: _upiController.text.trim().isEmpty ? null : _upiController.text.trim(),
               notificationPreference: _notificationPreference,
               avatarUrl: url,
             );
@@ -113,7 +109,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     try {
       await ref.read(authControllerProvider.notifier).updateProfile(
             name: name,
-            upiId: _upiController.text.trim().isEmpty ? null : _upiController.text.trim(),
             notificationPreference: _notificationPreference,
           );
       
@@ -253,15 +248,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: DesignTokens.spaceLg),
-                    AppTextField(
-                      controller: _upiController,
-                      hintText: 'UPI ID (optional, e.g. name@upi)',
-                      prefixIcon: Icon(
-                        Icons.wallet_outlined,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
+
                     const SizedBox(height: DesignTokens.spaceLg),
                     const Divider(height: 1),
                     const SizedBox(height: DesignTokens.spaceLg),

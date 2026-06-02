@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/theme/design_tokens.dart';
 import 'package:frontend/widgets/page_header.dart';
 import 'package:frontend/widgets/page_scaffold.dart';
+import 'package:intl/intl.dart';
 import 'package:frontend/widgets/app_surface.dart';
 import 'package:frontend/widgets/empty_state_view.dart';
 import 'package:frontend/providers/pool_providers.dart';
+import 'package:frontend/widgets/transaction_details_sheet.dart';
 
 class ActivityScreen extends ConsumerWidget {
   const ActivityScreen({super.key});
@@ -86,6 +88,7 @@ class _ActivityEntryCard extends StatelessWidget {
     final poolName = entry['poolName'] as String? ?? 'Unknown Pool';
     final createdByName = entry['createdByName'] as String? ?? entry['createdBy'] ?? '';
     final timestamp = entry['timestamp'] as String?;
+    final imageUrl = entry['imageUrl'] as String?;
 
     final isExpense = type == 'expense_added';
     final isContributionCreated = type == 'contribution_created';
@@ -131,77 +134,104 @@ class _ActivityEntryCard extends StatelessWidget {
         }
       }
     }
+    
+    String fullDateStr = '';
+    if (timestamp != null) {
+      final dt = DateTime.tryParse(timestamp);
+      if (dt != null) {
+        fullDateStr = DateFormat.yMMMd().add_jm().format(dt.toLocal());
+      }
+    }
+
+    String typeLabel = 'Transaction';
+    if (isExpense) typeLabel = 'Expense';
+    if (isPaid) typeLabel = 'Payment';
+    if (isContributionCreated) typeLabel = 'Contribution Request';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
       child: AppSurface(
         elevation: 0.5,
         showOutline: true,
-        padding: const EdgeInsets.all(DesignTokens.spaceMd),
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd, vertical: 12),
+        onTap: () {
+          TransactionDetailsSheet.show(
+            context: context,
+            title: description,
+            amount: amount,
+            dateStr: fullDateStr.isNotEmpty ? fullDateStr : null,
+            typeLabel: typeLabel,
+            creatorName: createdByName,
+            imageUrl: imageUrl,
+            isExpense: isExpense,
+            isPaid: isPaid,
+          );
+        },
         child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(DesignTokens.spaceSm),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(iconData, color: iconColor, size: 22),
-            ),
-            const SizedBox(width: DesignTokens.spaceMd),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(DesignTokens.spaceSm),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 2),
-                  Row(
+                  child: Icon(iconData, color: iconColor, size: 22),
+                ),
+                const SizedBox(width: DesignTokens.spaceMd),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          '$createdByName • $poolName',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        description,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (timeAgo.isNotEmpty) ...[
-                        Text(
-                          ' • $timeAgo',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '$createdByName • $poolName',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (timeAgo.isNotEmpty) ...[
+                            Text(
+                              ' • $timeAgo',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: DesignTokens.spaceSm),
+                Text(
+                  '$prefix₹${amount.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: isExpense
+                            ? scheme.error
+                            : isPaid
+                                ? DesignTokens.success
+                                : scheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(width: DesignTokens.spaceSm),
-            Text(
-              '$prefix₹${amount.toStringAsFixed(0)}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: isExpense
-                        ? scheme.error
-                        : isPaid
-                            ? DesignTokens.success
-                            : scheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
-        ),
       ),
     );
   }
 }
+

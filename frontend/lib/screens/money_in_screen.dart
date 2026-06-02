@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import "package:frontend/widgets/transaction_details_sheet.dart";
 import 'package:frontend/models/pool_model.dart';
 import 'package:frontend/providers/pool_providers.dart';
 import 'package:frontend/theme/design_tokens.dart';
@@ -84,11 +85,24 @@ class MoneyInScreen extends ConsumerWidget {
                       child: AppSurface(
                         elevation: 0,
                         color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                        padding: const EdgeInsets.all(DesignTokens.spaceLg),
+                        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd, vertical: 12),
+                        onTap: () {
+                          TransactionDetailsSheet.show(
+                            context: context,
+                            title: entry.description ?? 'Payment',
+                            amount: entry.amount,
+                            dateStr: dateStr,
+                            typeLabel: 'Money In',
+                            creatorName: entry.createdBy,
+                            paymentMethod: entry.paymentMethod?.name,
+                            imageUrl: entry.imageUrl,
+                            isPaid: true,
+                          );
+                        },
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(DesignTokens.spaceMd),
+                              padding: const EdgeInsets.all(DesignTokens.spaceSm),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.secondaryContainer,
                                 shape: BoxShape.circle,

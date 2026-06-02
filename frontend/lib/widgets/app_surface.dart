@@ -70,45 +70,50 @@ class _AppSurfaceState extends State<AppSurface> {
       child: widget.child,
     );
 
-    return AnimatedPhysicalModel(
-      duration: const Duration(milliseconds: 180),
+    return AnimatedScale(
+      scale: _isPressed ? 0.98 : 1.0,
+      duration: const Duration(milliseconds: 150),
       curve: Curves.easeOut,
-      color: surfaceColor,
-      shadowColor: Colors.black.withValues(alpha: 0.18),
-      elevation: effectiveElevation,
-      shape: BoxShape.rectangle,
-      borderRadius: widget.borderRadius,
-      clipBehavior: Clip.antiAlias,
-      child: Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          borderRadius: widget.borderRadius,
-          border: outline == BorderSide.none
-              ? null
-              : Border.fromBorderSide(outline),
-        ),
-        child: widget.onTap == null
-            ? content
-            : Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  onTap: widget.onTap,
-                  onHover: _handleHover,
-                  onHighlightChanged: _handleHighlight,
-                  borderRadius: widget.borderRadius,
-                  overlayColor: WidgetStateProperty.resolveWith((states) {
-                    if (states.contains(WidgetState.pressed)) {
-                      return scheme.primary.withValues(alpha: 0.12);
-                    }
-                    if (states.contains(WidgetState.hovered)) {
-                      return scheme.primary.withValues(alpha: 0.08);
-                    }
-                    return null;
-                  }),
-                  child: content,
+      child: AnimatedPhysicalModel(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        color: surfaceColor,
+        shadowColor: Colors.black.withValues(alpha: 0.18),
+        elevation: effectiveElevation,
+        shape: BoxShape.rectangle,
+        borderRadius: widget.borderRadius,
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: widget.borderRadius,
+            border: outline == BorderSide.none
+                ? null
+                : Border.fromBorderSide(outline),
+          ),
+          child: widget.onTap == null
+              ? content
+              : Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: widget.onTap,
+                    onHover: _handleHover,
+                    onHighlightChanged: _handleHighlight,
+                    borderRadius: widget.borderRadius,
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return scheme.primary.withValues(alpha: 0.12);
+                      }
+                      if (states.contains(WidgetState.hovered)) {
+                        return scheme.primary.withValues(alpha: 0.08);
+                      }
+                      return null;
+                    }),
+                    child: content,
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }

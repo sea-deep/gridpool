@@ -56,7 +56,7 @@ class DashboardScreen extends ConsumerWidget {
 
 
 
-            SliverFillRemaining(
+            SliverToBoxAdapter(
               child: AsyncValueWidget(
                 value: poolsAsyncValue,
                 data: (pools) {

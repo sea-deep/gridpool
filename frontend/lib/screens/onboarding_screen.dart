@@ -16,7 +16,6 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   late final TextEditingController _nameController;
-  final TextEditingController _upiController = TextEditingController();
   bool _notificationPreference = true;
 
   @override
@@ -29,7 +28,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _upiController.dispose();
     super.dispose();
   }
 
@@ -84,16 +82,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         color: scheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: DesignTokens.spaceLg),
-                    AppTextField(
-                      controller: _upiController,
-                      hintText: 'UPI ID (optional, e.g. name@upi)',
-                      prefixIcon: Icon(
-                        Icons.wallet_rounded,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: DesignTokens.spaceLg),
+
                     const Divider(height: 1),
                     const SizedBox(height: DesignTokens.spaceLg),
                     Row(
@@ -158,7 +147,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   try {
                     await ref.read(authControllerProvider.notifier).completeOnboarding(
                           name: name,
-                          upiId: _upiController.text.trim().isEmpty ? null : _upiController.text.trim(),
                           notificationPreference: _notificationPreference,
                         );
                   } catch (e) {

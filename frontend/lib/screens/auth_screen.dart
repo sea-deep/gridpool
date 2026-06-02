@@ -27,44 +27,6 @@ class AuthScreen extends ConsumerWidget {
     return PageScaffold(
       child: Stack(
         children: [
-          // Background blur shapes (Material You organic shapes)
-          Positioned(
-            top: -80,
-            right: -60,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.primary.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -40,
-            left: -80,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.tertiary.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 200,
-            left: -40,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.secondary.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-
           // Main content
           Center(
             child: SingleChildScrollView(
@@ -74,28 +36,13 @@ class AuthScreen extends ConsumerWidget {
                 children: [
                   // App logo
                   Center(
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [scheme.primary, scheme.tertiary],
-                        ),
-                        borderRadius: DesignTokens.radiusXl,
-                        boxShadow: [
-                          BoxShadow(
-                            color: scheme.primary.withValues(alpha: 0.25),
-                            blurRadius: 20,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.waves_rounded,
-                        size: 40,
-                        color: scheme.onPrimary,
+                    child: ClipRRect(
+                      borderRadius: DesignTokens.radiusXl,
+                      child: Image.asset(
+                        'assets/icons/logo.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),

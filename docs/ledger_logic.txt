@@ -1,0 +1,124 @@
+# GridPool: Ledger Maintenance & Logic Specifications
+
+This document provides a comprehensive technical analysis of how the transaction ledger is structured, updated, and maintained across both the backend server and the frontend client of GridPool.
+
+---
+
+## 1. Overview & Architectural Principles
+
+The Ledger is the foundational single source of truth for all financial transactions in GridPool. Rather than modifying pool totals and balances in isolation, every shift in a pool's financial state is recorded as a discrete event in the ledger.
+
+### Central Balance Cache vs Ledger Source of Truth
+* **Cache on Pool**: The `Pool` document maintains cached values for quick loading: `totalCollected`, `totalSpent`, `currentBalance`, and `pendingAmount`.
+* **Consistency Rule**: Any endpoint modifying these fields must write a corresponding `LedgerEntry` inside the same database transaction.
+* **Reconciliation Utility**: If a database drift or race condition occurs, pool totals are recalculatable by aggregating the history of `LedgerEntry` records for that pool.
+
+---
+
+## 2. Ledger Schema & Entities
+
+### The `LedgerEntry` Schema (MongoDB)
+Each entry in the ledger represents a transaction event:
+* `poolId` (ObjectId, Ref: 'Pool', Required)
+* `type` (String, Required): Defines the nature of the entry. Evaluated values in the codebase:
+  * `payment`: Verification of an online payment request by an admin.
+  * `due_paid`: A direct due settlement logged by a member.
+  * `expense_added`: Outflow of cash logged by an admin.
+  * `payment_marked_offline`: Cash or manual bank transfers logged in bulk by an admin.
+  * `manualAdjustment` (Legacy/Utility): Manual balance correction entries.
+* `amount` (Number, Required): Absolute value of the transaction. The UI displays negative or positive indicators based on the entry `type`.
+* `timestamp` (Date, Default: now)
+* `createdBy` (String, Required): Firebase UID of the user who initiated or approved the action.
+* `description` (String, Required): User-friendly summary (e.g., "Payment verified from John Doe" or the title of the expense).
+* `relatedContributionId` (String, Nullable): Maps back to automated scheduled contribution parameters.
+* `relatedExpenseId` (String, Nullable): Maps back to the detailed `Expense` document.
+* `imageUrl` (String, Nullable): Cloudinary URL containing receipt or screenshot proof.
+
+---
+
+## 3. Financial Inflow Logic (Money In)
+
+GridPool logs financial inflows through three distinct backend paths. Each path uses MongoDB sessions to wrap modifications in a transaction:
+
+### A. Direct Due Settlements (`POST /api/ledger/pay-due`)
+* **Trigger**: A member registers a payment towards their dynamic due balance directly.
+* **Capping Rules**: To prevent pool balances from going out-of-sync or pending balances from going negative, the system compares the payment amount against the member's current `dueAmount`. The payment is capped: `payAmount = Math.min(requestedAmount, member.dueAmount)`.
+* **Database Updates**:
+  1. Decrements the member's due: `dueAmount = dueAmount - payAmount`.
+  2. Increases Pool metrics: `pool.totalCollected += payAmount`, `pool.currentBalance += payAmount`.
+  3. Decrements Pool pending dues: `pool.pendingAmount -= payAmount`.
+  4. Saves a new `LedgerEntry` of type `due_paid` referencing the payer.
+
+### B. Screenshot Verification (`POST /api/pools/:poolId/payment-requests/:requestId/approve`)
+* **Trigger**: Owner or Admin approves a member's uploaded payment confirmation screenshot.
+* **Cross-Pool Guard**: Verifies that the payment request belongs to the specific `poolId` route param to prevent cross-pool validation exploits.
+* **Database Updates**:
+  1. Updates the `PaymentRequest` status to `APPROVED`.
+  2. Decrements the member's due: `dueAmount = dueAmount - request.amount`.
+  3. Increases Pool metrics: `pool.totalCollected += request.amount`, `pool.currentBalance += request.amount`.
+  4. Saves a new `LedgerEntry` of type `payment` caching the receipt's Cloudinary URL (`imageUrl: pr.screenshotUrl`).
+
+### C. Bulk Offline Collections (`POST /api/pools/:poolId/log-collection`)
+* **Trigger**: Admin logs offline cash/UPI payments from multiple members simultaneously.
+* **Processing Loops**: The API loops through the list of collections:
+  1. Verifies each target `userId` belongs to the pool.
+  2. Cuteness checks: Only increments totals if the member is valid.
+  3. Decrements member dues: `member.dueAmount = Math.max(0, member.dueAmount - collection.amount)`.
+  4. Saves a distinct `LedgerEntry` of type `payment_marked_offline` for each member payment, detailing payment method (e.g. Cash) and notes.
+* **Database Updates**: Sums all valid payments in the request and updates the Pool: `pool.currentBalance += totalCollectedAmount`, `pool.totalCollected += totalCollectedAmount`.
+
+---
+
+## 4. Financial Outflow Logic (Money Out)
+
+GridPool logs financial outflows through a single transactional workflow:
+
+### Expense Recording (`POST /api/ledger/expense`)
+* **Trigger**: Admin logs a pool purchase with category, note, and receipt capture.
+* **Database Updates**:
+  1. Validates the expense title, positive amount, and admin privileges.
+  2. Deducts amount from Pool balance: `pool.currentBalance -= expense.amount`.
+  3. Increments Pool spent totals: `pool.totalSpent += expense.amount`.
+  4. Saves the detailed `Expense` document.
+  5. Saves a new `LedgerEntry` of type `expense_added` caching the receipt's Cloudinary URL (`imageUrl: receiptUrl`) and linking the `relatedExpenseId` back to the new expense document.
+
+---
+
+## 5. Ledger Reconciliation & Balance Correction
+
+To recover from race conditions or ledger-to-pool balance drift, GridPool provides a reconciliation script in the backend directory:
+
+### `backend/fix_balances.js`
+In the event of sync failures, this script can be executed to rebuild the state of all pools:
+1. Connects to MongoDB and fetches all active pools.
+2. For each pool, queries all `LedgerEntry` items.
+3. Loops through the entries and filters for credit types:
+   * `payment`
+   * `due_paid`
+   * `contributionPaid`
+   * `paymentMarkedOffline` (also evaluated as `paymentMarkedOffline` due to CamelCase/snake_case history)
+   * `manualAdjustment` where the adjustment amount is positive.
+4. Accumulates the sum of these entries into a calculated `totalCollected` value.
+5. Resets the pool status:
+   ```javascript
+   pool.totalCollected = totalCollected;
+   pool.currentBalance = totalCollected; // (Assuming no expense offset in current fix script version)
+   await pool.save();
+   ```
+
+---
+
+## 6. Frontend State Management & UI Synchronization
+
+### Data Polling & Caching (Riverpod)
+The client synchronizes transaction history reactively using stream-based Riverpod providers defined in `pool_providers.dart`:
+* **`ledgerProvider`**: Exposes a `StreamProvider.family` linked to `poolId`.
+* **Repository Hook**: Calls `watchLedger(poolId)` in `pool_repository.dart`, returning a stream that polls `GET /api/pools/:poolId/ledger` every 4 seconds via `Stream.periodic`.
+
+### UI Presentation
+* **Combined Details Feed**: In `PoolDetailsScreen`, all ledger entries are rendered chronologically in a timeline feed.
+* **Inflow Tab (`MoneyInScreen`)**: Lists credit entries. Computes and renders a green indicator:
+  `+ ₹${entry.amount}` (using `LedgerEntryType.payment`, `LedgerEntryType.contributionPaid`, `LedgerEntryType.paymentMarkedOffline`, or positive adjustments).
+* **Outflow Tab (`MoneyOutScreen`)**: Filters debit entries (`expense_added`), displaying them with red labels.
+* **Interactive Transaction Sheets**: Tapping a ledger item triggers `TransactionDetailsSheet.show`, which checks the entry's `imageUrl` to display the verified screenshot/receipt directly, along with details of the creator and payment method.
+* **Dashboard Global Activity Feed**: Calls `/api/activity` which aggregates ledger entries across all pools the user is enrolled in, rendering a unified timeline on the home dashboard.

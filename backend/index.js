@@ -99,7 +99,6 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   avatarUrl: { type: String, required: true },
-  upiId: { type: String, default: null },
   onboardingCompleted: { type: Boolean, default: false },
   notificationPreference: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
@@ -111,7 +110,7 @@ const User = mongoose.model('User', userSchema);
 
 const poolSchema = new mongoose.Schema({
   name: { type: String, required: true, maxlength: 200 },
-  description: { type: String, required: true, maxlength: 2000 },
+  description: { type: String, maxlength: 2000 },
   currency: { type: String, default: 'INR', enum: ['INR', 'USD', 'EUR', 'GBP'] },
   upiId: { type: String, default: null },
   inviteCode: { type: String, default: '' },
@@ -213,7 +212,8 @@ const ledgerEntrySchema = new mongoose.Schema({
   createdBy: { type: String, required: true },
   description: { type: String, required: true },
   relatedContributionId: { type: String, default: null },
-  relatedExpenseId: { type: String, default: null }
+  relatedExpenseId: { type: String, default: null },
+  imageUrl: { type: String, default: null }
 });
 const LedgerEntry = mongoose.model('LedgerEntry', ledgerEntrySchema);
 
@@ -344,12 +344,9 @@ async function ensureUserExists(firebaseUser) {
 }
 
 // Shared user profile update logic — used by /users/profile POST and /users/onboarding/complete
-function applyProfileUpdates(user, { name, upiId, notificationPreference, avatarUrl }) {
+function applyProfileUpdates(user, { name, notificationPreference, avatarUrl }) {
   if (name !== undefined && name.trim().length > 0) {
     user.name = name.trim();
-  }
-  if (upiId !== undefined) {
-    user.upiId = upiId && upiId.trim().length > 0 ? upiId.trim() : null;
   }
   if (notificationPreference !== undefined) {
     user.notificationPreference = !!notificationPreference;
@@ -569,10 +566,6 @@ app.post('/api/pools/create', async (req, res) => {
       await session.abortTransaction(); session.endSession();
       return res.status(400).json({ error: 'Pool name is required' });
     }
-    if (!description || typeof description !== 'string' || description.trim().length === 0) {
-      await session.abortTransaction(); session.endSession();
-      return res.status(400).json({ error: 'Pool description is required' });
-    }
     const parsedContribution = parseFloat(expectedContribution || 0.0);
     if (isNaN(parsedContribution) || parsedContribution < 0) {
       await session.abortTransaction(); session.endSession();
@@ -588,7 +581,7 @@ app.post('/api/pools/create', async (req, res) => {
 
     const pool = new Pool({
       name: name.trim(),
-      description: description.trim(),
+      description: description ? description.trim() : '',
       currency,
       upiId: upiId ? upiId.trim() : null,
       createdBy: userId,
@@ -678,6 +671,65 @@ app.get('/api/pools', async (req, res) => {
   } catch (error) {
     console.error('Error fetching pools:', error);
     res.status(500).json({ error: 'Failed to fetch pools' });
+  }
+});
+
+// Update pool info
+app.put('/api/pools/:poolId', async (req, res) => {
+  try {
+    const { poolId } = req.params;
+    const { name, description, upiId, expectedContribution, frequency, customInterval } = req.body;
+    const userId = req.user.uid;
+
+    const pool = await Pool.findById(poolId);
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+    
+    // Validate role
+    const member = await PoolMember.findOne({ poolId, userId });
+    if (!member || (member.role !== 'owner' && member.role !== 'admin')) {
+      return res.status(403).json({ error: 'Unauthorized to edit pool' });
+    }
+
+    pool.name = name || pool.name;
+    pool.description = description !== undefined ? description : pool.description;
+    pool.upiId = upiId !== undefined ? upiId : pool.upiId;
+    pool.expectedContribution = expectedContribution !== undefined ? expectedContribution : pool.expectedContribution;
+    pool.frequency = frequency || pool.frequency;
+    pool.customInterval = customInterval !== undefined ? customInterval : pool.customInterval;
+
+    await pool.save();
+    res.json(pool);
+  } catch (error) {
+    console.error('Error updating pool:', error);
+    res.status(500).json({ error: 'Failed to update pool' });
+  }
+});
+
+// Delete pool
+app.delete('/api/pools/:poolId', async (req, res) => {
+  try {
+    const { poolId } = req.params;
+    const userId = req.user.uid;
+
+    const pool = await Pool.findById(poolId);
+    if (!pool) return res.status(404).json({ error: 'Pool not found' });
+    
+    // Only owner can delete
+    if (pool.createdBy !== userId) {
+      return res.status(403).json({ error: 'Only the pool owner can delete the pool' });
+    }
+
+    await Pool.findByIdAndDelete(poolId);
+    await PoolMember.deleteMany({ poolId });
+    await LedgerEntry.deleteMany({ poolId });
+    await Expense.deleteMany({ poolId });
+    await JoinRequest.deleteMany({ poolId });
+    await PaymentRequest.deleteMany({ poolId });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting pool:', error);
+    res.status(500).json({ error: 'Failed to delete pool' });
   }
 });
 
@@ -1054,7 +1106,8 @@ app.post('/api/ledger/expense', async (req, res) => {
       createdBy: userId,
       description: title.trim(),
       relatedExpenseId: expense._id,
-      timestamp: expense.createdAt
+      timestamp: expense.createdAt,
+      imageUrl: receiptUrl
     });
     await ledger.save({ session });
 
@@ -1294,6 +1347,7 @@ app.post('/api/pools/:poolId/payment-requests/:requestId/approve', async (req, r
       amount: pr.amount,
       description: `Payment verified from ${pr.name}`,
       createdBy: pr.userId,
+      imageUrl: pr.screenshotUrl
     });
     await entry.save({ session });
 

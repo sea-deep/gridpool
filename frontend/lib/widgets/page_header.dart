@@ -20,28 +20,37 @@ class PageHeader extends StatelessWidget {
         top: DesignTokens.space2Xl,
         bottom: DesignTokens.spaceLg,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        spacing: DesignTokens.spaceMd,
+        runSpacing: DesignTokens.spaceLg,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        alignment: WrapAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.headlineMedium),
+              if (subtitle != null) ...[
+                const SizedBox(height: DesignTokens.spaceXs),
+                Text(
+                  subtitle!,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ],
+          ),
+          if (actions != null)
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(title, style: Theme.of(context).textTheme.headlineMedium),
-                if (subtitle != null) ...[
-                  const SizedBox(height: DesignTokens.spaceXs),
-                  Text(
-                    subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+                for (int i = 0; i < actions!.length; i++) ...[
+                  actions![i],
+                  if (i < actions!.length - 1)
+                    const SizedBox(width: DesignTokens.spaceSm),
+                ]
               ],
             ),
-          ),
-          if (actions != null) ...[
-            const SizedBox(width: DesignTokens.spaceMd),
-            ...actions!,
-          ],
         ],
       ),
     );

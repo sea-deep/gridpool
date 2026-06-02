@@ -3,17 +3,13 @@ class User {
   final String name;
   final String email;
   final String avatarUrl;
-  final String? upiId;
   final bool notificationPreference;
-
-  static const _sentinel = Object();
 
   const User({
     required this.id,
     required this.name,
     required this.email,
     required this.avatarUrl,
-    this.upiId,
     this.notificationPreference = true,
   });
 
@@ -22,7 +18,6 @@ class User {
     String? name,
     String? email,
     String? avatarUrl,
-    Object? upiId = _sentinel,
     bool? onboardingCompleted,
     bool? notificationPreference,
   }) {
@@ -31,7 +26,6 @@ class User {
       name: name ?? this.name,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
-      upiId: identical(upiId, _sentinel) ? this.upiId : upiId as String?,
       notificationPreference: notificationPreference ?? this.notificationPreference,
     );
   }

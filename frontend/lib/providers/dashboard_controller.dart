@@ -37,6 +37,21 @@ class DashboardController extends AsyncNotifier<List<Pool>> {
     }
   }
 
+  Future<void> completeOnboarding({
+    required String name,
+    required bool notificationPreference,
+  }) async {
+    final authController = ref.read(authControllerProvider.notifier);
+    try {
+      await authController.completeOnboarding(
+        name: name,
+        notificationPreference: notificationPreference,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> createPool({
     required String name,
     required String description,

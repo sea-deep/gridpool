@@ -10,6 +10,7 @@ import 'package:frontend/providers/auth_controller.dart';
 import 'package:frontend/models/pool_model.dart';
 import 'package:frontend/models/pool_member.dart';
 import 'package:frontend/models/join_request.dart';
+import 'package:frontend/models/payment_request.dart';
 
 import 'package:frontend/providers/pool_providers.dart';
 import 'package:frontend/providers/dashboard_controller.dart';
@@ -38,7 +39,7 @@ class PoolDetailsScreen extends ConsumerWidget {
     final paymentRequestsAsync = ref.watch(paymentRequestsProvider(pool.id));
     
     final pendingPaymentCount = paymentRequestsAsync.maybeWhen(
-      data: (requests) => requests.where((r) => r.status == 'PENDING').length,
+      data: (requests) => requests.where((r) => r.status == PaymentRequestStatus.pending).length,
       orElse: () => 0,
     );
 
@@ -176,7 +177,7 @@ class PoolDetailsScreen extends ConsumerWidget {
                 final hasDues = userDue > 0;
                 
                 final hasPendingRequest = paymentRequestsAsync.maybeWhen(
-                  data: (requests) => requests.any((r) => r.userId == currentUser.id && r.status == 'PENDING'),
+                  data: (requests) => requests.any((r) => r.userId == currentUser.id && r.status == PaymentRequestStatus.pending),
                   orElse: () => false,
                 );
 
@@ -396,6 +397,56 @@ class PoolDetailsScreen extends ConsumerWidget {
                               icon: Icons.money_off_rounded,
                               onTap: () => context.push('/log-expense', extra: pool),
                             ),
+                            _ActionCard(
+                              title: 'Edit Pool Info',
+                              icon: Icons.edit_rounded,
+                              onTap: () => context.push('/edit-pool', extra: pool),
+                            ),
+                            _ActionCard(
+                              title: 'Delete Pool',
+                              icon: Icons.delete_outline_rounded,
+                              onTap: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text('Delete Pool'),
+                                    content: const Text('Are you sure you want to permanently delete this pool? This action cannot be undone.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: Theme.of(context).colorScheme.error,
+                                        ),
+                                        onPressed: () => Navigator.pop(ctx, true),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                
+                                if (confirm == true && context.mounted) {
+                                  try {
+                                    await ref.read(poolRepositoryProvider).deletePool(pool.id);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Pool deleted successfully')),
+                                      );
+                                      ref.invalidate(dashboardControllerProvider);
+                                      context.go('/dashboard');
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Error deleting pool: $e')),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                            ),
                           ],
                         ],
                       ),
@@ -427,66 +478,64 @@ class _ActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
+    return AppSurface(
+      onTap: onTap,
+      elevation: 0,
+      hoverElevation: 2,
+      showOutline: true,
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: DesignTokens.radiusMd,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: DesignTokens.radiusMd,
-            border: Border.all(color: scheme.outlineVariant),
-          ),
-          padding: const EdgeInsets.all(DesignTokens.spaceXs),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      borderRadius: DesignTokens.radiusMd, // Reduced from default radiusLg (24) to radiusMd (16)
+      padding: const EdgeInsets.all(DesignTokens.spaceXs),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          const SizedBox(height: DesignTokens.spaceSm),
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(DesignTokens.spaceSm),
+              Container(
+                padding: const EdgeInsets.all(DesignTokens.spaceSm),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12), // 16 (radiusMd) - 4 (spaceXs) = 12
+                ),
+                child: Icon(icon, color: scheme.onPrimaryContainer, size: 24),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: scheme.primaryContainer,
+                      color: scheme.error,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, color: scheme.onPrimaryContainer, size: 24),
-                  ),
-                  if (badgeCount > 0)
-                    Positioned(
-                      right: -4,
-                      top: -4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: scheme.error,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          badgeCount > 9 ? '9+' : badgeCount.toString(),
-                          style: TextStyle(
-                            color: scheme.onError,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                    child: Text(
+                      badgeCount > 9 ? '9+' : badgeCount.toString(),
+                      style: TextStyle(
+                        color: scheme.onError,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: DesignTokens.spaceSm),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
             ],
           ),
-        ),
+          const SizedBox(height: DesignTokens.spaceSm),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

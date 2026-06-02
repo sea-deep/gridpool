@@ -8,6 +8,7 @@ import 'package:frontend/screens/splash_screen.dart';
 import 'package:frontend/screens/onboarding_screen.dart';
 import 'package:frontend/screens/dashboard_screen.dart';
 import 'package:frontend/screens/create_pool_screen.dart';
+import 'package:frontend/screens/edit_pool_screen.dart';
 import 'package:frontend/screens/join_pool_screen.dart';
 import 'package:frontend/screens/pool_details_screen.dart';
 import 'package:frontend/screens/members_screen.dart';
@@ -84,6 +85,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/create-pool',
         builder: (context, state) => const CreatePoolScreen(),
+      ),
+      GoRoute(
+        path: '/edit-pool',
+        builder: (context, state) {
+          final pool = state.extra;
+          if (pool is! Pool) {
+            return const DashboardScreen();
+          }
+          return EditPoolScreen(pool: pool);
+        },
       ),
       GoRoute(
         path: '/join-pool',

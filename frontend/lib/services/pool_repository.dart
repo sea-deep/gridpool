@@ -114,7 +114,56 @@ class PoolRepository {
     }
   }
 
+
+  Future<void> updatePool({
+    required String poolId,
+    required String name,
+    required String description,
+    String? upiId,
+    required String frequency,
+    int? customInterval,
+    required double expectedContribution,
+  }) async {
+    final targetUrl = Uri.parse('$_baseUrl/pools/$poolId');
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        targetUrl,
+        headers: headers,
+        body: jsonEncode({
+          'name': name,
+          'description': description,
+          'upiId': upiId,
+          'frequency': frequency,
+          'customInterval': customInterval,
+          'expectedContribution': expectedContribution,
+        }),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update pool: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('updatePool failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deletePool(String poolId) async {
+    final targetUrl = Uri.parse('$_baseUrl/pools/$poolId');
+    try {
+      final headers = await _getHeaders();
+      final response = await http.delete(targetUrl, headers: headers);
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete pool: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('deletePool failed: $e');
+      rethrow;
+    }
+  }
+
   // ─── Join Requests ──────────────────────────────────────────────────
+
 
   Future<void> submitJoinRequest({
     required String inviteCode,
@@ -324,7 +373,7 @@ class PoolRepository {
         throw Exception('Failed to fetch members: ${response.body}');
       }
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => PoolMember.fromJson(json['id'] ?? json['_id'] ?? '', json)).toList();
+      return data.map((json) => PoolMember.fromJson(json['userId'] ?? json['_id'] ?? '', json)).toList();
     } catch (e) {
       debugPrint('fetchMembers failed: $e');
       rethrow;
@@ -394,7 +443,7 @@ class PoolRepository {
         throw Exception('Failed to add custom member: $errorMsg');
       }
       final data = jsonDecode(response.body);
-      return PoolMember.fromJson(data['id'] ?? data['_id'] ?? '', data);
+      return PoolMember.fromJson(data['userId'] ?? data['_id'] ?? '', data);
     } catch (e) {
       debugPrint('addCustomMember failed: $e');
       rethrow;
