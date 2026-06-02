@@ -61,6 +61,7 @@ class _JoinPoolScreenState extends ConsumerState<JoinPoolScreen> {
 
     return PageScaffold(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
             title: 'Join Pool',

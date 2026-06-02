@@ -94,6 +94,7 @@ class _EditPoolScreenState extends ConsumerState<EditPoolScreen> {
 
     return PageScaffold(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
             title: 'Edit Pool',

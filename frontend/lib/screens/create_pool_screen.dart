@@ -75,6 +75,7 @@ class _CreatePoolScreenState extends ConsumerState<CreatePoolScreen> {
 
     return PageScaffold(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
             title: 'Create Pool',

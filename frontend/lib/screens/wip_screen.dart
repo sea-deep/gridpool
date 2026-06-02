@@ -12,6 +12,7 @@ class WipScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return PageScaffold(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
             title: title,

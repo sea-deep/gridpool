@@ -119,6 +119,7 @@ class PoolMembersScreen extends ConsumerWidget {
 
     return PageScaffold(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
             title: 'Pool Members',

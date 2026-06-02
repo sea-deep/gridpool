@@ -23,6 +23,7 @@ class ApproveJoinScreen extends ConsumerWidget {
 
     return PageScaffold(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           PageHeader(
             title: 'Approve Join',

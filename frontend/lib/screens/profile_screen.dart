@@ -147,6 +147,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return PageScaffold(
       child: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const PageHeader(
               title: 'Profile Settings',
