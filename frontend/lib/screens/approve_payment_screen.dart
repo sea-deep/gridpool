@@ -20,7 +20,6 @@ class ApprovePaymentScreen extends ConsumerWidget {
     final paymentRequestsAsync = ref.watch(paymentRequestsProvider(pool.id));
 
     return PageScaffold(
-      title: 'Approve Payments',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
