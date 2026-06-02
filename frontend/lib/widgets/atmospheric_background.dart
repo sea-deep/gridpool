@@ -52,7 +52,7 @@ class AtmosphericBackground extends StatelessWidget {
         ),
         
         // Actual content
-        child,
+        Positioned.fill(child: child),
       ],
     );
   }
