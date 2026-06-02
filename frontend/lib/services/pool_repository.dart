@@ -21,7 +21,7 @@ class PoolRepository {
   final FirebaseFirestore _firestore;
 
   String get _baseUrl {
-    return dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:3000/api';
+    return dotenv.env['API_BASE_URL'] ?? 'https://gridpool.up.railway.app/api';
   }
 
   PoolRepository(this._firestore);
