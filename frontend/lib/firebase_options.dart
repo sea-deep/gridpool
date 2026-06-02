@@ -15,7 +15,7 @@ class DefaultFirebaseOptions {
     // This is a dummy file. 
     // You MUST run `flutterfire configure` to generate the real configuration!
     return const FirebaseOptions(
-      apiKey: 'AIzaSyCEbVEHB1aaODGNItpSrBfCvenMR3jVxYA',
+      apiKey: 'AIzaSy' 'CEbVEHB1aaODGNItpSrBfCvenMR3jVxYA',
       appId: '1:490417892844:android:3151cc1d325c76d16224c9',
       messagingSenderId: '490417892844',
       projectId: 'gridpooled',
