@@ -92,7 +92,7 @@ class _ActivityEntryCard extends StatelessWidget {
 
     final isExpense = type == 'expense_added';
     final isContributionCreated = type == 'contribution_created';
-    final isPaid = type == 'contribution_paid';
+    final isPaid = type == 'contribution_paid' || type == 'payment' || type == 'payment_marked_offline' || type == 'due_paid';
 
     IconData iconData;
     Color iconColor;

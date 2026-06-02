@@ -46,6 +46,7 @@ class MoneyInScreen extends ConsumerWidget {
                   return e.type == LedgerEntryType.payment ||
                          e.type == LedgerEntryType.contributionPaid ||
                          e.type == LedgerEntryType.paymentMarkedOffline ||
+                         e.type == LedgerEntryType.duePaid ||
                          (e.type == LedgerEntryType.manualAdjustment && e.amount > 0);
                 }).toList();
                 

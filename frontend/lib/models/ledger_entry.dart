@@ -7,6 +7,7 @@ enum LedgerEntryType {
   manualAdjustment,
   paymentMarkedOffline,
   payment,
+  duePaid,
 }
 
 extension LedgerEntryTypeX on LedgerEntryType {
@@ -24,6 +25,8 @@ extension LedgerEntryTypeX on LedgerEntryType {
         return 'payment_marked_offline';
       case LedgerEntryType.payment:
         return 'payment';
+      case LedgerEntryType.duePaid:
+        return 'due_paid';
     }
   }
 
@@ -39,6 +42,8 @@ extension LedgerEntryTypeX on LedgerEntryType {
         return LedgerEntryType.paymentMarkedOffline;
       case 'payment':
         return LedgerEntryType.payment;
+      case 'due_paid':
+        return LedgerEntryType.duePaid;
       default:
         return LedgerEntryType.contributionCreated;
     }
